@@ -15,7 +15,7 @@ $baseline = getRecurringBaselineAnalysis($conn, $user_id);
 $selected_month = isset($_GET['month']) ? $_GET['month'] : date('Y-m');
 
 // Hitung total pengeluaran berdasarkan bulan yang dipilih
-$query_total = $conn->prepare("SELECT SUM(amount) as total FROM dummy_transactions WHERE user_id = ? AND DATE_FORMAT(time_txn, '%Y-%m') COLLATE utf8mb4_general_ci = ?");
+$query_total = $conn->prepare("SELECT SUM(amount) as total FROM dummy_transactions WHERE user_id = ? AND CAST(DATE_FORMAT(time_txn, '%Y-%m') AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci = CAST(? AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci");
 $query_total->bind_param("is", $user_id, $selected_month);
 $query_total->execute();
 $total_spending = $query_total->get_result()->fetch_assoc()['total'] ?? 0;
