@@ -1,71 +1,81 @@
-# JEDA Smart Saving Card 💳✨
-**"Pause the Impulse. Protect Your Future."**
+# 🌟 JEDA (Smart Parenting & Financial Literacy Monitor)
 
-JEDA adalah platform *companion web app* berbasis gamifikasi dan literasi finansial. Prototipe ini dirancang khusus untuk ekosistem *boarding school* (SMA Asy-Syahid) sebagai pelengkap sistem BSI Smart Card dan kasir Syahid Mart yang sudah ada. JEDA tidak menyimpan uang asli, melainkan menggunakan konsep **Virtual Soft-Limit** untuk memanipulasi batas jajan harian siswa secara psikologis agar mereka disiplin menabung.
-
----
-
-## 🎯 Nilai Inovasi Utama
-1. **Pemisahan Hard Limit & Soft Limit:** Memotong batas jajan harian BSI (Rp25.000) dengan target tabungan harian siswa, sehingga memunculkan "Jatah Jajan Aman" virtual.
-2. **Gamifikasi Angel vs Zombie:** Avatar siswa akan bersinar (Angel 👼) jika disiplin, dan berubah menjadi zombi (Zombie 🧟) jika belanja melebihi batas (berutang pada tabungan sendiri).
-3. **AI Financial Coach:** Menganalisis riwayat transaksi Syahid Mart (misal: pengeluaran *"Camilan Malam"*) dan memberikan saran penghematan kontekstual.
-4. **Smart Parental Dashboard:** Dasbor orang tua yang secara cerdas **mengunci** fitur hadiah (Top-Up Apresiasi) jika anak sedang dalam fase boros/zombi.
+**JEDA** adalah aplikasi web interaktif berbasis PHP dan MySQL yang dirancang khusus untuk membantu anak dan orang tua dalam memantau literasi keuangan, manajemen pengeluaran harian, target tabungan (*saving goals*), serta prediksi kebutuhan konsumsi rutin berbasis AI (*Recurring Baseline Analysis*).
 
 ---
 
-## 💻 Tech Stack Prototipe
-*   **Backend:** PHP (Native/Vanilla) & MySQL.
-*   **Frontend:** HTML5, CSS3, JavaScript (Bootstrap 5 via CDN).
-*   **Environment:** Laragon / XAMPP (Local) & Hostinger (Live Deployment).
+## 🚀 Fitur Utama
+
+1. **Dashboard Siswa & Analitik Bulanan**
+   * Pemantauan total pengeluaran harian dan bulanan secara *real-time*.
+   * Filter periode bulanan interaktif (melihat riwayat transaksi hingga beberapa bulan ke belakang).
+   * Grafik visualisasi proporsi pengeluaran menggunakan **Chart.js (Donut Chart)**[cite: 1].
+2. **AI Recurring Baseline & Restock Prediction**
+   * Sistem cerdas yang mendeteksi pola konsumsi berulang (seperti sabun, pasta gigi, atau paket data) berdasarkan siklus 30 hari[cite: 1].
+   * Estimasi tanggal barang habis dan pengingat *restock* otomatis bagi siswa[cite: 1].
+3. **Manajemen Target Tabungan (Saving Goals)**
+   * Membantu siswa menetapkan target finansial (misal: membeli buku, sepatu, dll.) lengkap dengan progress bar dan status pencapaian (`ACTIVE` / `COMPLETED`)[cite: 1].
+4. **Leaderboard & Gamifikasi**
+   * Sistem peringkat antar siswa untuk memotivasi pengelolaan keuangan yang lebih bijak dan disiplin menabung.
+5. **Profil & Kartu Pintar (Virtual Wallet)**
+   * Integrasi saldo nyata, batas pengeluaran harian (*daily hard limit*), serta rekam jejak streak menabung[cite: 1].
 
 ---
 
-## 🚀 Panduan Instalasi Lokal (Laragon/XAMPP)
-1. Pindahkan folder `jeda` ke dalam direktori `www` (Laragon) atau `htdocs` (XAMPP).
-2. Buka **HeidiSQL** atau **phpMyAdmin**.
-3. Buat database baru dengan nama `jeda_db`.
-4. Jalankan (Import/Eksekusi Query) kumpulan *script* SQL yang telah disediakan sebelumnya untuk membentuk tabel dan data *dummy*.
-5. Sesuaikan kredensial database di file `koneksi.php` (default user: `root`, password: kosong).
-6. Buka browser dan akses: `http://localhost/jeda/login.php` (atau `http://jeda.test` di Laragon).
+## 🛠️ Teknologi yang Digunakan
+
+* **Backend:** PHP (Native / OOP-style prepare statements dengan MySQLi)
+* **Frontend:** Tailwind CSS (Styling modern & responsif ala mobile app)
+* **Database:** MySQL / MariaDB (Standar Encoding: `utf8mb4_unicode_ci`)
+* **Library Grafik:** Chart.js[cite: 1]
+* **Server Environment:** Laragon (Local Development) & Hostinger (Production Deployment)
 
 ---
 
-## 🎬 Skenario Presentasi (The "Wow" Moments)
+## 📂 Struktur Database & Data Dummy
 
-Berikut adalah panduan mendemonstrasikan sistem ini di depan juri. Sistem memiliki dua peran utama: **Siswa** dan **Orang Tua**. 
-
-Gunakan akun-akun *dummy* di bawah ini untuk menunjukkan kecerdasan dinamis JEDA:
-
-### Skenario 1: Teguran Cerdas AI Financial Coach (Fokus: Literasi Keuangan)
-Sistem JEDA tidak memberikan respons pasif, melainkan membaca apa yang dibeli siswa.
-*   **Login Siswa:** `dika` | **Password:** `123`
-*   **Aksi:** Tunjukkan Dasbor Dika. Juri akan melihat AI menyala (💡) dan memberikan teguran spesifik: *"Jajan camilan malammu naik nih. Kurangi jajan malam agar target beli Jaket Angkatan cepat tercapai!"* Ini terjadi karena *database* mencatat Dika sering jajan di kategori "Camilan Malam".
-*   **Kontras:** Coba login sebagai `siti` (Password: `123`). Siti hanya membeli buku dan air mineral, sehingga AI akan memberikan pujian, bukan teguran.
-
-### Skenario 2: Gamifikasi Sanksi Sosial (Angel vs Zombie)
-Tunjukkan bahwa aplikasi ini menghukum keborosan dengan sanksi visual.
-*   **Login Siswa:** `budi` | **Password:** `123`
-*   **Aksi:** Budi saat ini berstatus boros (utang tabungan Rp5.000). Sorot avatarnya yang berubah menjadi **Zombie (🧟‍♂️)** dan pita peringatan utang berwarna merah.
-*   **Aksi Tambahan:** Klik "Custom Avatar" dan ubah menjadi Kucing Emas. Karena masih berutang, avatarnya menjadi **Kucing Zombie (😿🧟)**.
-
-### Skenario 3: Smart Parenting & Conditional Top-Up (Puncak Presentasi)
-Gunakan skenario ini untuk memukau juri terkait fitur edukasi karakter di tingkat keluarga.
-*   **Login Orang Tua:** `ortu_hendra` | **Password:** `123`
-*   **Aksi:** Jelaskan bahwa Bapak Hendra sedang memantau anak kembarnya: **Aldo** (Si Boros) dan **Aldi** (Si Hemat).
-*   **Sorot Kartu Aldo:** Tunjukkan bahwa Aldo berutang (Zombie). Buktikan bahwa tombol apresiasi berubah menjadi abu-abu bertuliskan **"🔒 Apresiasi Terkunci (Anak Berutang)"**. Sistem mendidik orang tua agar *tidak memanjakan* anak yang boros.
-*   **Sorot Kartu Aldi:** Tunjukkan bahwa Aldi disiplin (Angel) dengan *streak* 21 hari. Tombol apresiasi berwarna hijau menyala.
-*   **Eksekusi:** Klik tombol apresiasi di kartu Aldi, berikan nominal Rp 50.000. Sistem akan mensimulasikan penambahan saldo langsung ke akun PSP Mobile milik Aldi.
+Aplikasi ini menggunakan beberapa tabel utama yang saling berelasi:
+* **`parents`**: Menyimpan data akun orang tua pembimbing[cite: 1].
+* **`users`**: Menyimpan data akun siswa (terhubung ke `parents` melalui `parent_id`)[cite: 1].
+* **`dummy_transactions`**: Mencatat riwayat transaksi keuangan harian siswa (kategori, nominal, dan waktu transaksi)[cite: 1].
+* **`item_baselines`**: Data referensi siklus barang rutin (misal: sabun muka, pasta gigi, buku tulis)[cite: 1].
+* **`saving_goals`**: Daftar target tabungan dan jumlah yang telah terkumpul[cite: 1].
+* **`virtual_wallets`**: Pengelolaan saldo, batas limit, dan streak harian siswa[cite: 1].
 
 ---
 
-## 📁 Struktur Direktori
-*   `login.php` : Pintu masuk aplikasi (deteksi otomatis peran siswa/ortu).
-*   `index.php` : Dasbor utama siswa (Soft Limit, Gamifikasi, AI Coach).
-*   `parent_dashboard.php` : Dasbor orang tua (Multi-child tracking, Conditional Top Up).
-*   `koneksi.php` : Jembatan koneksi sistem dengan MySQL.
-*   `update_goal.php` & `update_avatar.php` : Pemroses form kustomisasi profil siswa.
-*   `topup_action.php` : Pemroses transfer uang virtual dari orang tua ke anak.
-*   `logout.php` : Penghancur sesi (*session destroyer*).
+## 💻 Panduan Instalasi & Menjalankan Lokal
 
+1. **Clone Repository** ke direktori web server lokal Anda (misal: `laragon/www/JEDA` atau `htdocs/JEDA`):
+   ```bash
+   git clone [https://github.com/username/JEDA.git](https://github.com/username/JEDA.git)
+
+2. **Konfigurasi Database:**
+
+Buat database baru di MySQL dengan nama jeda_db (pastikan collation diset ke utf8mb4_unicode_ci).
+
+Import file .sql yang tersedia ke dalam database tersebut melalui phpMyAdmin atau HeidiSQL.
+
+Pengaturan Koneksi:
+
+Sesuaikan kredensial database Anda pada file koneksi.php:
+ ```php
+   $host = "localhost";
+    $user = "root";
+    $pass = "";
+    $db   = "jeda_db";
+```
+3. **Aplikasi Siap Digunakan:**
+
+Buka browser dan akses URL: http://localhost/JEDA/login.php
+
+🌐 Deployment (Hostinger)
+Upload file project melalui Git integration atau File Manager Hostinger.
+
+Buat database MySQL di panel Hostinger, lalu import struktur tabel yang sama.
+
+Pastikan file koneksi.php sudah dikonfigurasi menggunakan konfigurasi database production dan penambahan charset:
+ ```php
+  $conn->set_charset("utf8mb4");
+```
 ---
-*Dikembangkan untuk presentasi inovasi teknologi finansial pelajar (2026).*
