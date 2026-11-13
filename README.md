@@ -1,81 +1,89 @@
-# 🌟 JEDA (Smart Parenting & Financial Literacy Monitor)
+# JEDA
 
-**JEDA** adalah aplikasi web interaktif berbasis PHP dan MySQL yang dirancang khusus untuk membantu anak dan orang tua dalam memantau literasi keuangan, manajemen pengeluaran harian, target tabungan (*saving goals*), serta prediksi kebutuhan konsumsi rutin berbasis AI (*Recurring Baseline Analysis*).
+**Smart Parenting & Financial Literacy Monitor**
 
----
+JEDA adalah aplikasi web interaktif berbasis PHP dan MySQL untuk membantu anak dan orang tua memantau literasi keuangan, pengeluaran harian, target tabungan (*saving goals*), serta prediksi kebutuhan rutin (*Recurring Baseline Analysis*).
 
-## 🚀 Fitur Utama
+## Fitur Utama
 
-1. **Dashboard Siswa & Analitik Bulanan**
-   * Pemantauan total pengeluaran harian dan bulanan secara *real-time*.
-   * Filter periode bulanan interaktif (melihat riwayat transaksi hingga beberapa bulan ke belakang).
-   * Grafik visualisasi proporsi pengeluaran menggunakan **Chart.js (Donut Chart)**[cite: 1].
-2. **AI Recurring Baseline & Restock Prediction**
-   * Sistem cerdas yang mendeteksi pola konsumsi berulang (seperti sabun, pasta gigi, atau paket data) berdasarkan siklus 30 hari[cite: 1].
-   * Estimasi tanggal barang habis dan pengingat *restock* otomatis bagi siswa[cite: 1].
-3. **Manajemen Target Tabungan (Saving Goals)**
-   * Membantu siswa menetapkan target finansial (misal: membeli buku, sepatu, dll.) lengkap dengan progress bar dan status pencapaian (`ACTIVE` / `COMPLETED`)[cite: 1].
-4. **Leaderboard & Gamifikasi**
-   * Sistem peringkat antar siswa untuk memotivasi pengelolaan keuangan yang lebih bijak dan disiplin menabung.
-5. **Profil & Kartu Pintar (Virtual Wallet)**
-   * Integrasi saldo nyata, batas pengeluaran harian (*daily hard limit*), serta rekam jejak streak menabung[cite: 1].
+1. **Dashboard siswa dan analitik bulanan**
+   - Memantau total pengeluaran harian dan bulanan.
+   - Memfilter riwayat transaksi berdasarkan bulan.
+   - Menampilkan proporsi pengeluaran menggunakan grafik donat Chart.js.
+2. **Recurring baseline dan prediksi restock**
+   - Mendeteksi pola konsumsi berulang, seperti sabun, pasta gigi, atau paket data.
+   - Memperkirakan waktu barang perlu diisi ulang.
+3. **Manajemen target tabungan**
+   - Menetapkan target finansial dan memantau progresnya.
+   - Menggunakan status `ACTIVE` dan `COMPLETED`.
+4. **Leaderboard dan gamifikasi**
+   - Memotivasi siswa untuk mengelola uang dan menabung dengan lebih bijak.
+5. **Profil dan virtual wallet**
+   - Menampilkan saldo, batas pengeluaran harian (*daily hard limit*), dan streak menabung.
 
----
+## Teknologi
 
-## 🛠️ Teknologi yang Digunakan
+- **Backend:** PHP native dan MySQLi.
+- **Frontend:** Tailwind CSS.
+- **Database:** MySQL atau MariaDB dengan encoding `utf8mb4`.
+- **Grafik:** Chart.js.
+- **Lingkungan server:** Laragon untuk pengembangan lokal; Hostinger untuk deployment.
 
-* **Backend:** PHP (Native / OOP-style prepare statements dengan MySQLi)
-* **Frontend:** Tailwind CSS (Styling modern & responsif ala mobile app)
-* **Database:** MySQL / MariaDB (Standar Encoding: `utf8mb4_unicode_ci`)
-* **Library Grafik:** Chart.js[cite: 1]
-* **Server Environment:** Laragon (Local Development) & Hostinger (Production Deployment)
+## Struktur Database
 
----
+Tabel utama yang digunakan aplikasi:
 
-## 📂 Struktur Database & Data Dummy
+- `parents`: akun orang tua.
+- `users`: akun siswa yang terhubung ke orang tua melalui `parent_id`.
+- `dummy_transactions`: riwayat transaksi siswa.
+- `item_baselines`: referensi siklus kebutuhan rutin.
+- `saving_goals`: target tabungan dan progresnya.
+- `virtual_wallets`: saldo, batas, dan streak menabung siswa.
 
-Aplikasi ini menggunakan beberapa tabel utama yang saling berelasi:
-* **`parents`**: Menyimpan data akun orang tua pembimbing[cite: 1].
-* **`users`**: Menyimpan data akun siswa (terhubung ke `parents` melalui `parent_id`)[cite: 1].
-* **`dummy_transactions`**: Mencatat riwayat transaksi keuangan harian siswa (kategori, nominal, dan waktu transaksi)[cite: 1].
-* **`item_baselines`**: Data referensi siklus barang rutin (misal: sabun muka, pasta gigi, buku tulis)[cite: 1].
-* **`saving_goals`**: Daftar target tabungan dan jumlah yang telah terkumpul[cite: 1].
-* **`virtual_wallets`**: Pengelolaan saldo, batas limit, dan streak harian siswa[cite: 1].
+## Skenario Demo Berdasarkan Data Seed
 
----
+Semua akun contoh menggunakan kata sandi **`123`**. Pada halaman login, pilih portal **Siswa** atau **Orang Tua** sesuai jenis akun.
 
-## 💻 Panduan Instalasi & Menjalankan Lokal
+### Skenario siswa
 
-1. **Clone Repository** ke direktori web server lokal Anda (misal: `laragon/www/JEDA` atau `htdocs/JEDA`):
+| Username | Contoh perilaku |
+| --- | --- |
+| `nisa` atau `aldi` | Contoh siswa rajin menabung. Keduanya memiliki streak menabung 21 hari pada data seed. |
+| `budi` atau `aldo` | Contoh siswa dengan pengelolaan keuangan yang kurang disiplin. Aldo memiliki transaksi belanja bernilai besar, sedangkan Budi memiliki saldo rendah dan utang virtual. |
+
+### Skenario orang tua
+
+| Username | Anak yang dapat dipantau |
+| --- | --- |
+| `ortu_hendra` | Aldo (contoh boros) dan Aldi (contoh rajin menabung), sehingga perilaku dua anak dapat dibandingkan dari satu akun orang tua. |
+| `ortu_dika` | Dika (satu anak). |
+| `ortu_nisa` | Nisa (satu anak, contoh rajin menabung). |
+
+Pada data seed saat ini, akun `ortu_dika` hanya terhubung ke Dika; akun tersebut tidak menampilkan Aldo atau Aldi. Gunakan `ortu_hendra` untuk melihat contoh anak boros dan hemat sekaligus.
+
+## Instalasi Lokal
+
+1. Clone repository ke direktori web server lokal, misalnya `laragon/www/JEDA` atau `htdocs/JEDA`:
+
    ```bash
-   git clone [https://github.com/username/JEDA.git](https://github.com/username/JEDA.git)
+   git clone https://github.com/username/JEDA.git
+   ```
 
-2. **Konfigurasi Database:**
+2. Buat database MySQL bernama `jeda_db` dengan collation `utf8mb4_unicode_ci`.
+3. Import file SQL yang tersedia melalui phpMyAdmin atau HeidiSQL.
+4. Sesuaikan kredensial database pada [koneksi.php](./koneksi.php):
 
-Buat database baru di MySQL dengan nama jeda_db (pastikan collation diset ke utf8mb4_unicode_ci).
-
-Import file .sql yang tersedia ke dalam database tersebut melalui phpMyAdmin atau HeidiSQL.
-
-Pengaturan Koneksi:
-
-Sesuaikan kredensial database Anda pada file koneksi.php:
- ```php
+   ```php
    $host = "localhost";
-    $user = "root";
-    $pass = "";
-    $db   = "jeda_db";
-```
-3. **Aplikasi Siap Digunakan:**
+   $user = "root";
+   $pass = "";
+   $db = "jeda_db";
+   ```
 
-Buka browser dan akses URL: http://localhost/JEDA/login.php
+5. Buka aplikasi melalui `http://localhost/JEDA/login.php`.
 
-🌐 Deployment (Hostinger)
-Upload file project melalui Git integration atau File Manager Hostinger.
+## Deployment ke Hostinger
 
-Buat database MySQL di panel Hostinger, lalu import struktur tabel yang sama.
-
-Pastikan file koneksi.php sudah dikonfigurasi menggunakan konfigurasi database production dan penambahan charset:
- ```php
-  $conn->set_charset("utf8mb4");
-```
----
+1. Unggah file proyek menggunakan Git integration atau File Manager Hostinger.
+2. Buat database MySQL di panel Hostinger, lalu import file SQL.
+3. Perbarui kredensial pada [koneksi.php](./koneksi.php) sesuai konfigurasi database production. Koneksi menggunakan charset `utf8mb4`.
