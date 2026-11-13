@@ -21,13 +21,19 @@ $query_total->execute();
 $total_spending = $query_total->get_result()->fetch_assoc()['total'] ?? 0;
 $query_total->close();
 
+
 // Ambil data kategori pengeluaran berdasarkan bulan yang dipilih untuk Donut Chart
 $category_query = $conn->prepare("
     SELECT category, SUM(amount) as total_cat 
     FROM dummy_transactions 
-    WHERE user_id = ? AND DATE_FORMAT(time_txn, '%Y-%m') = ?
+    WHERE user_id = ? AND DATE_FORMAT(time_txn, '%Y-%m') COLLATE utf8mb4_general_ci = CAST(? AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci
     GROUP BY category
 ");
+
+if (!$category_query) {
+    die("Query Prepare Gagal: " . $conn->error);
+}
+
 $category_query->bind_param("is", $user_id, $selected_month);
 $category_query->execute();
 $cat_result = $category_query->get_result();
