@@ -2,7 +2,7 @@
 session_start();
 include 'koneksi.php';
 
-// Pastikan hanya orang tua yang bisa akses
+// Pastikan hanya orang tua yang login
 if (!isset($_SESSION['parent_id']) || $_SESSION['role'] != 'parent') {
     header("Location: login.php");
     exit();
@@ -10,108 +10,238 @@ if (!isset($_SESSION['parent_id']) || $_SESSION['role'] != 'parent') {
 
 $parent_id = $_SESSION['parent_id'];
 
-// Ambil data orang tua
-$ortu_query = $conn->query("SELECT name FROM parents WHERE id = $parent_id");
-$ortu_data = $ortu_query->fetch_assoc();
+// Ambil daftar anak dari orang tua yang login
+$children_q = $conn->prepare("SELECT id, name, avatar_base FROM users WHERE parent_id = ? AND role = 'student'");
+$children_q->bind_param("i", $parent_id);
+$children_q->execute();
+$children_res = $children_q->get_result();
 
-// Ambil data anak-anak yang terhubung dengan orang tua ini
-$query_anak = "SELECT u.id as anak_id, u.name, u.avatar_base, u.grade, 
-               v.real_balance, v.saving_goal_name, v.target_amount, v.saved_amount, v.virtual_debt, v.streak_days 
-               FROM users u 
-               JOIN virtual_wallets v ON u.id = v.user_id 
-               WHERE u.parent_id = $parent_id";
-$result_anak = $conn->query($query_anak);
+$children = [];
+while ($c = $children_res->fetch_assoc()) {
+    $children[] = $c;
+}
+$children_q->close();
+
+// Tentukan anak yang sedang dipilih
+$selected_child_id = isset($_GET['child_id']) ? intval($_GET['child_id']) : ($children[0]['id'] ?? 0);
+
+$active_child = null;
+foreach ($children as $child) {
+    if ($child['id'] == $selected_child_id) {
+        $active_child = $child;
+        break;
+    }
+}
+if (!$active_child && !empty($children)) {
+    $active_child = $children[0];
+    $selected_child_id = $active_child['id'];
+}
+
+// Proses Kirim Apresiasi atau Top-Up oleh Orang Tua
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
+    $target_child_id = intval($_POST['target_child_id']);
+    $amount = floatval($_POST['amount']);
+    $note = trim($_POST['note']);
+
+    if ($amount > 0) {
+        if ($_POST['action'] == 'apresiasi') {
+            // Tambah saldo & catat sebagai apresiasi
+            $conn->query("UPDATE virtual_wallets SET real_balance = real_balance + $amount WHERE user_id = $target_child_id");
+            $conn->query("INSERT INTO dummy_transactions (user_id, item_name, category, amount, time_txn) VALUES ($target_child_id, '🎁 Apresiasi Orang Tua: $note', 'Bonus', -$amount, NOW())");
+            $success_msg = "Berhasil mengirim apresiasi sebesar Rp " . number_format($amount, 0, ',', '.') . "!";
+        } elseif ($_POST['action'] == 'topup') {
+            // Top-up saldo PSP anak
+            $conn->query("UPDATE virtual_wallets SET real_balance = real_balance + $amount WHERE user_id = $target_child_id");
+            $conn->query("INSERT INTO dummy_transactions (user_id, item_name, category, amount, time_txn) VALUES ($target_child_id, '💳 Top-Up Saldo PSP', 'TopUp', -$amount, NOW())");
+            $success_msg = "Berhasil top-up saldo sebesar Rp " . number_format($amount, 0, ',', '.') . "!";
+        }
+    }
+}
+
+// Ambil data dompet anak aktif
+$w_q = $conn->prepare("SELECT real_balance, virtual_debt, streak_days FROM virtual_wallets WHERE user_id = ?");
+$w_q->bind_param("i", $selected_child_id);
+$w_q->execute();
+$wallet = $w_q->get_result()->fetch_assoc();
+$w_q->close();
+
+$balance = $wallet['real_balance'] ?? 0;
+$debt = $wallet['virtual_debt'] ?? 0;
+$streak = $wallet['streak_days'] ?? 0;
+$is_zombie = ($debt > 0);
 ?>
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Orang Tua - JEDA</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>body { background-color: #f4f6f9; }</style>
+    <title>JEDA - Dasbor Orang Tua</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f172a; }</style>
 </head>
-<body>
+<body class="flex justify-center items-center min-h-screen">
 
-<div class="container py-4" style="max-width: 480px;">
-    <!-- Header Ortu -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h5 class="mb-0 fw-bold">Halo, <?= $ortu_data['name']; ?> 👨‍👩‍👦</h5>
-            <small class="text-muted">Pantau Finansial Anak Anda</small>
-        </div>
-        <a href="logout.php" class="btn btn-sm btn-outline-danger rounded-pill fw-bold">Keluar</a>
-    </div>
+    <div class="w-full max-w-[480px] bg-slate-50 min-h-screen shadow-2xl flex flex-col justify-between relative pb-24">
+        
+        <!-- HEADER KONSISTEN ORANG TUA -->
+        <?php include 'parent_header.php'; ?>
 
-    <h6 class="fw-bold mb-3">Daftar Anak</h6>
-
-    <?php while($anak = $result_anak->fetch_assoc()): 
-        $progress = ($anak['target_amount'] > 0) ? round(($anak['saved_amount'] / $anak['target_amount']) * 100) : 0;
-        $is_zombie = ($anak['virtual_debt'] > 0);
-        $avatar = ($is_zombie) ? '🧟‍♂️' : '👼';
-    ?>
-    
-    <!-- Kartu Anak -->
-    <div class="card border-0 shadow-sm rounded-4 mb-4">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div class="d-flex align-items-center">
-                    <div class="display-5 me-3"><?= $avatar; ?></div>
-                    <div>
-                        <h6 class="fw-bold mb-0"><?= $anak['name']; ?></h6>
-                        <small class="text-muted">Kartu PSP: Rp <?= number_format($anak['real_balance'], 0, ',', '.'); ?></small>
-                    </div>
-                </div>
-                <span class="badge <?= ($is_zombie) ? 'bg-danger' : 'bg-success'; ?> rounded-pill">
-                    <?= ($is_zombie) ? 'Ada Utang' : 'Disiplin'; ?>
-                </span>
-            </div>
-
-            <!-- Progress Target -->
-            <small class="fw-bold text-primary">Target: <?= $anak['saving_goal_name']; ?></small>
-            <div class="progress mt-1 mb-2" style="height: 8px;">
-                <div class="progress-bar bg-primary" style="width: <?= $progress; ?>%"></div>
-            </div>
+        <!-- Konten Utama Dasbor Orang Tua -->
+        <div class="p-4 flex-1 space-y-4 overflow-y-auto">
             
-            <div class="d-flex justify-content-between mb-3 text-sm">
-                <small class="text-muted">Terkumpul: Rp <?= number_format($anak['saved_amount'], 0, ',', '.'); ?></small>
-                <small class="text-warning fw-bold">🔥 Streak: <?= $anak['streak_days']; ?> Hari</small>
+            <?php if (isset($success_msg)): ?>
+                <div class="bg-emerald-100 border border-emerald-200 text-emerald-700 px-4 py-2.5 rounded-2xl text-xs font-bold">
+                    ✨ <?= $success_msg; ?>
+                </div>
+            <?php endif; ?>
+
+            <!-- Ringkasan Keuangan Anak -->
+            <div class="bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-5 rounded-3xl shadow-lg space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs text-blue-100 font-medium">Saldo PSP Utama</span>
+                    <span class="text-xs bg-white/20 px-2.5 py-1 rounded-xl font-bold">🔥 Streak <?= $streak; ?> Hari</span>
+                </div>
+                <div>
+                    <h2 class="text-3xl font-black">Rp <?= number_format($balance, 0, ',', '.'); ?></h2>
+                </div>
+                <?php if ($is_zombie): ?>
+                <div class="bg-rose-500/30 border border-rose-400/30 p-2.5 rounded-2xl text-[11px] text-rose-100 flex justify-between items-center">
+                    <span>Virtual Debt: <b>Rp <?= number_format($debt, 0, ',', '.'); ?></b></span>
+                    <span class="font-bold">Perlu Pelunasan</span>
+                </div>
+                <?php endif; ?>
             </div>
 
-            <!-- Tombol Apresiasi memanggil Modal -->
-            <button class="btn <?= ($is_zombie) ? 'btn-secondary' : 'btn-success'; ?> w-100 rounded-pill fw-bold" 
-                <?= ($is_zombie) ? 'disabled' : 'data-bs-toggle="modal" data-bs-target="#topupModal' . $anak['anak_id'] . '"'; ?>>
-                <?= ($is_zombie) ? '🔒 Apresiasi Terkunci (Anak Berutang)' : '🎁 Beri Apresiasi (Top Up PSP)'; ?>
-            </button>
-        </div>
-    </div>
+            <!-- TOMBOL AKSI CEPAT: APRESIASI & TOP-UP (Non-Aktif jika Zombie Mode) -->
+            <div class="grid grid-cols-2 gap-3">
+                <?php if ($is_zombie): ?>
+                    <!-- Tombol Apresiasi Dikunci / Disabled karena Zombie Mode -->
+                    <button disabled title="Anak sedang dalam Zombie Mode. Lunasi utang terlebih dahulu." class="bg-slate-300 text-slate-500 p-3.5 rounded-2xl text-xs font-bold cursor-not-allowed flex items-center justify-center gap-2 opacity-75">
+                        <span class="text-base">🔒</span>
+                        <span>Apresiasi Terkunci</span>
+                    </button>
+                <?php else: ?>
+                    <!-- Tombol Apresiasi Aktif -->
+                    <button onclick="openModal('apresiasi')" class="bg-emerald-600 hover:bg-emerald-700 text-white p-3.5 rounded-2xl text-xs font-bold transition shadow-sm flex items-center justify-center gap-2">
+                        <span class="text-base">🎁</span>
+                        <span>Kirim Apresiasi</span>
+                    </button>
+                <?php endif; ?>
 
-    <!-- Modal Top Up (Spesifik per Anak) -->
-    <div class="modal fade" id="topupModal<?= $anak['anak_id']; ?>" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title fw-bold">Apresiasi untuk <?= $anak['name']; ?></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <!-- Tombol Top-Up Saldo Selalu Aktif -->
+                <button onclick="openModal('topup')" class="bg-blue-600 hover:bg-blue-700 text-white p-3.5 rounded-2xl text-xs font-bold transition shadow-sm flex items-center justify-center gap-2">
+                    <span class="text-base">💳</span>
+                    <span>Top-Up Saldo</span>
+                </button>
+            </div>
+
+            <!-- Target Tabungan Anak (Read-Only) -->
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-slate-800 text-sm">Target Tabungan Anak 🎯</h3>
+                    <a href="parent_manage_goals.php?child_id=<?= $selected_child_id; ?>" class="text-xs font-bold text-blue-600 hover:underline">Lihat Semua</a>
                 </div>
-                <div class="modal-body">
-                    <form action="topup_action.php" method="POST">
-                        <input type="hidden" name="anak_id" value="<?= $anak['anak_id']; ?>">
-                        <div class="mb-3">
-                            <label class="form-label text-muted small">Nominal Top Up (Rp)</label>
-                            <input type="number" name="amount" class="form-control rounded-3" placeholder="Contoh: 50000" required>
+                <div class="space-y-2">
+                    <?php
+                    $goals_q = $conn->query("SELECT * FROM saving_goals WHERE user_id = $selected_child_id LIMIT 2");
+                    if ($goals_q && $goals_q->num_rows > 0):
+                        while($g = $goals_q->fetch_assoc()):
+                            $pct = ($g['target_amount'] > 0) ? round(($g['saved_amount'] / $g['target_amount']) * 100) : 0;
+                            if($pct > 100) $pct = 100;
+                    ?>
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-1.5">
+                        <div class="flex justify-between text-xs">
+                            <span class="font-semibold text-slate-700"><?= htmlspecialchars($g['goal_name']); ?></span>
+                            <span class="font-bold text-blue-600"><?= $pct; ?>%</span>
                         </div>
-                        <button type="submit" class="btn btn-success w-100 rounded-pill fw-bold py-2">Kirim ke Kartu PSP</button>
-                    </form>
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                            <div class="bg-blue-600 h-full rounded-full" style="width: <?= $pct; ?>%;"></div>
+                        </div>
+                    </div>
+                    <?php endwhile; else: ?>
+                        <p class="text-xs text-slate-400 text-center py-2">Anak belum memiliki target tabungan.</p>
+                    <?php endif; ?>
                 </div>
             </div>
+
         </div>
+
+        <!-- MODAL FORM APRESIASI / TOP-UP -->
+        <div id="actionModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-[360px] p-5 rounded-3xl space-y-4 shadow-2xl">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <h3 id="modalTitle" class="font-bold text-slate-800 text-sm">Form Aksi</h3>
+                    <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-xs font-bold">✕ Tutup</button>
+                </div>
+                <form method="POST" action="parent_dashboard.php?child_id=<?= $selected_child_id; ?>" class="space-y-3">
+                    <input type="hidden" name="target_child_id" value="<?= $selected_child_id; ?>">
+                    <input type="hidden" id="actionType" name="action" value="">
+                    
+                    <div>
+                        <label class="text-[10px] text-slate-400 font-semibold block mb-1">Nominal (Rp)</label>
+                        <input type="number" name="amount" placeholder="Contoh: 50000" required class="w-full bg-slate-50 border border-slate-200 text-xs rounded-xl px-3 py-2.5 text-slate-700 focus:outline-none focus:border-blue-500">
+                    </div>
+
+                    <div id="noteContainer">
+                        <label class="text-[10px] text-slate-400 font-semibold block mb-1">Pesan Apresiasi / Catatan</label>
+                        <input type="text" name="note" placeholder="Contoh: Karena rajin belajar & sholat" class="w-full bg-slate-50 border border-slate-200 text-xs rounded-xl px-3 py-2.5 text-slate-700 focus:outline-none focus:border-blue-500">
+                    </div>
+
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-sm">Kirim Sekarang</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- BOTTOM NAVIGATION BAR ORANG TUA (5 Menu Konsisten) -->
+        <div class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-100 py-3 px-3 flex justify-around items-center rounded-t-3xl shadow-lg z-50">
+            <a href="parent_dashboard.php?child_id=<?= $selected_child_id; ?>" class="flex flex-col items-center text-blue-600">
+                <span class="text-xl">🏠</span>
+                <span class="text-[9px] font-bold mt-1">Beranda</span>
+            </a>
+            <a href="parent_child_analytics.php?child_id=<?= $selected_child_id; ?>" class="flex flex-col items-center text-slate-400 hover:text-blue-600">
+                <span class="text-xl">📊</span>
+                <span class="text-[9px] font-medium mt-1">Analitik</span>
+            </a>
+            <a href="parent_manage_goals.php?child_id=<?= $selected_child_id; ?>" class="flex flex-col items-center text-slate-400 hover:text-blue-600">
+                <span class="text-xl">🎯</span>
+                <span class="text-[9px] font-medium mt-1">Target</span>
+            </a>
+            <a href="parent_leaderboard.php?child_id=<?= $selected_child_id; ?>" class="flex flex-col items-center text-slate-400 hover:text-blue-600">
+                <span class="text-xl">🏆</span>
+                <span class="text-[9px] font-medium mt-1">Ranking</span>
+            </a>
+            <a href="parent_profile_card.php?child_id=<?= $selected_child_id; ?>" class="flex flex-col items-center text-slate-400 hover:text-blue-600">
+                <span class="text-xl">💳</span>
+                <span class="text-[9px] font-medium mt-1">Profil</span>
+            </a>
+        </div>
+
     </div>
 
-    <?php endwhile; ?>
-</div>
+    <!-- Script Modal JavaScript -->
+    <script>
+        function openModal(type) {
+            const modal = document.getElementById('actionModal');
+            const title = document.getElementById('modalTitle');
+            const actionType = document.getElementById('actionType');
+            const noteContainer = document.getElementById('noteContainer');
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+            modal.classList.remove('hidden');
+            actionType.value = type;
+
+            if (type === 'apresiasi') {
+                title.innerText = '🎁 Kirim Apresiasi / Bonus';
+                noteContainer.style.display = 'block';
+            } else {
+                title.innerText = '💳 Top-Up Saldo PSP Anak';
+                noteContainer.style.display = 'none';
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('actionModal').classList.add('hidden');
+        }
+    </script>
 </body>
 </html>
