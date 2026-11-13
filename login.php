@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
             $stmt->close();
         } elseif ($role == 'parent') {
-            $stmt = $conn->prepare("SELECT id, name, role FROM parents WHERE (name = ? OR username = ?) AND password = ?");
+            $stmt = $conn->prepare("SELECT id, name FROM parents WHERE (name = ? OR username = ?) AND password = ?");
             $stmt->bind_param("sss", $input_user, $input_user, $input_pass);
             $stmt->execute();
             $result = $stmt->get_result();
