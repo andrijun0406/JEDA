@@ -26,7 +26,7 @@ $query_total->close();
 $category_query = $conn->prepare("
     SELECT category, SUM(amount) as total_cat 
     FROM dummy_transactions 
-    WHERE user_id = ? AND DATE_FORMAT(time_txn, '%Y-%m')
+    WHERE user_id = ? AND DATE_FORMAT(time_txn, '%Y-%m') = ?
     GROUP BY category
 ");
 
